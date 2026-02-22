@@ -1,0 +1,9 @@
+{
+  "name": "afficho-types",
+  "image": "mcr.microsoft.com/devcontainers/go:1.24",
+  "customizations": {
+    "vscode": {
+      "extensions": ["golang.go"]
+    }
+  }
+}
