@@ -8,6 +8,8 @@ import "encoding/json"
 // WebSocket message type constants. These appear in the "type" field of every
 // WSMessage exchanged between client and cloud.
 const (
+	// Display control (local + cloud → device).
+
 	// TypeCurrent tells the device which content item to display now.
 	TypeCurrent = "current"
 	// TypeReload instructs the device to reload its current view.
@@ -20,12 +22,32 @@ const (
 	TypeTicket = "ticket"
 	// TypeSettings pushes updated device settings.
 	TypeSettings = "settings"
-	// TypeHeartbeatAck acknowledges a heartbeat from the device.
-	TypeHeartbeatAck = "heartbeat_ack"
+
+	// Cloud → device sync and commands.
+
 	// TypeSyncContent pushes content items for the device to download.
 	TypeSyncContent = "sync_content"
 	// TypeSyncPlaylist pushes a full playlist replacement to the device.
 	TypeSyncPlaylist = "sync_playlist"
+	// TypeSyncSchedule pushes schedule definitions to the device.
+	TypeSyncSchedule = "sync_schedule"
+	// TypeCommand sends a command to the device (reload, reboot, update, screenshot).
+	TypeCommand = "command"
+	// TypeHeartbeatAck acknowledges a heartbeat from the device.
+	TypeHeartbeatAck = "heartbeat_ack"
+
+	// Device → cloud.
+
+	// TypeRegister is sent by the device on first connect with DeviceRegistration payload.
+	TypeRegister = "register"
+	// TypeHeartbeat is sent periodically by the device with Heartbeat payload.
+	TypeHeartbeat = "heartbeat"
+	// TypeSyncAck acknowledges a completed content or playlist sync.
+	TypeSyncAck = "sync_ack"
+	// TypeProofOfPlay sends batched playback records to the cloud.
+	TypeProofOfPlay = "proof_of_play"
+	// TypeScreenshot sends a screenshot in response to a command.
+	TypeScreenshot = "screenshot"
 )
 
 // WSMessage is the top-level WebSocket envelope. Every message exchanged
