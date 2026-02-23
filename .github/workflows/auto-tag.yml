@@ -1,0 +1,70 @@
+name: Auto Tag
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    name: Bump version & tag
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # need full history to find latest tag
+
+      - name: Get latest tag
+        id: latest
+        run: |
+          tag=$(git tag -l 'v*' --sort=-v:refname | head -n1)
+          echo "tag=${tag:-v0.0.0}" >> "$GITHUB_OUTPUT"
+
+      - name: Determine bump type from commits
+        id: bump
+        run: |
+          latest="${{ steps.latest.outputs.tag }}"
+          # Collect commit subjects since last tag.
+          if git rev-parse "$latest" >/dev/null 2>&1; then
+            commits=$(git log "$latest"..HEAD --pretty=format:"%s")
+          else
+            commits=$(git log --pretty=format:"%s")
+          fi
+
+          if echo "$commits" | grep -qiE '^BREAKING CHANGE|^[a-z]+(\(.*\))?!:'; then
+            echo "type=major" >> "$GITHUB_OUTPUT"
+          elif echo "$commits" | grep -qiE '^feat(\(.*\))?:'; then
+            echo "type=minor" >> "$GITHUB_OUTPUT"
+          else
+            echo "type=patch" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Compute next version
+        id: next
+        run: |
+          current="${{ steps.latest.outputs.tag }}"
+          current="${current#v}"
+          IFS='.' read -r major minor patch <<< "$current"
+
+          case "${{ steps.bump.outputs.type }}" in
+            major) major=$((major + 1)); minor=0; patch=0 ;;
+            minor) minor=$((minor + 1)); patch=0 ;;
+            patch) patch=$((patch + 1)) ;;
+          esac
+
+          echo "version=v${major}.${minor}.${patch}" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push tag
+        run: |
+          git tag "${{ steps.next.outputs.version }}"
+          git push origin "${{ steps.next.outputs.version }}"
+
+      - name: Summary
+        run: |
+          echo "### Tagged ${{ steps.next.outputs.version }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Bump type: **${{ steps.bump.outputs.type }}**" >> "$GITHUB_STEP_SUMMARY"
+          echo "Previous: ${{ steps.latest.outputs.tag }}" >> "$GITHUB_STEP_SUMMARY"
