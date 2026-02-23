@@ -83,7 +83,58 @@ Contains **only** wire-format types — no business logic, no dependencies beyon
 
 ---
 
-## Phase 2 — Client Migration
+## Phase 2 — Missing Wire Types
+
+Types needed for cloud ↔ device communication that are not yet defined:
+
+### Message type constants (device → cloud)
+- [ ] `TypeRegister` = `"register"` — device registration on first connect
+- [ ] `TypeHeartbeat` = `"heartbeat"` — periodic device status report
+- [ ] `TypeSyncAck` = `"sync_ack"` — device acknowledges content/playlist/schedule sync
+- [x] `TypeProofOfPlay` = `"proof_of_play"` — batch playback records
+- [ ] `TypeScreenshot` = `"screenshot"` — screenshot response to command
+
+### Message type constants (cloud → device)
+- [ ] `TypeSyncSchedule` = `"sync_schedule"` — push schedule definitions
+- [ ] `TypeCommand` = `"command"` — trigger device action (reload, reboot, update, screenshot)
+
+### New types
+- [ ] `ScheduleSync` — cloud → device, schedule definitions
+  ```go
+  type ScheduleSync struct {
+      Schedules []ScheduleSyncItem `json:"schedules"`
+  }
+  type ScheduleSyncItem struct {
+      ID         string `json:"id"`
+      PlaylistID string `json:"playlist_id"`
+      CronExpr   string `json:"cron_expr"`
+      Priority   int    `json:"priority"`
+  }
+  ```
+- [ ] `SyncAck` — device → cloud, acknowledge a sync operation
+  ```go
+  type SyncAck struct {
+      SyncType string `json:"sync_type"` // "content", "playlist", "schedule"
+      Success  bool   `json:"success"`
+      Error    string `json:"error,omitempty"`
+  }
+  ```
+- [x] `ProofOfPlayRecord` — device → cloud, batch of playback events
+  ```go
+  type ProofOfPlayReport struct {
+      DeviceID string              `json:"device_id"`
+      Records  []ProofOfPlayRecord `json:"records"`
+  }
+  type ProofOfPlayRecord struct {
+      ContentID string `json:"content_id"`
+      StartedAt string `json:"started_at"` // RFC 3339
+      DurationS int    `json:"duration_s"`
+  }
+  ```
+
+---
+
+## Phase 3 — Client Migration
 
 After the types are published, refactor the client:
 
